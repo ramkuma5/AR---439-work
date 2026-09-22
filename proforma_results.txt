@@ -1,0 +1,62 @@
+
+INCOME STATEMENT (USD millions)
+                                            FY2026E      FY2027E      FY2028E      FY2029E      FY2030E
+Revenue                                    18,323.0     18,652.8     18,988.5     19,330.3     19,678.3
+Cogs                                       15,198.9     15,472.5     15,751.0     16,034.5     16,323.1
+Gross Profit                                3,124.1      3,180.3      3,237.5      3,295.8      3,355.1
+Sga                                         2,077.5      2,083.1      2,088.2      2,125.8      2,164.1
+Depreciation                                   82.4         86.9         91.3         95.5         99.7
+Impairment                                    120.0        120.0        120.0        120.0        120.0
+Operating Income                              844.2        890.3        938.1        954.5        971.4
+Interest                                      289.0        282.5        276.1        269.7        263.4
+Pretax                                        555.2        607.8        661.9        684.8        708.0
+Tax                                           141.6        155.0        168.8        174.6        180.5
+Net Income                                    413.6        452.8        493.1        510.1        527.5
+
+BALANCE SHEET (USD millions)
+                                            FY2026E      FY2027E      FY2028E      FY2029E      FY2030E
+Cash                                          101.8        206.9        356.6        527.5        719.8
+Inventory                                   2,174.7      2,213.8      2,253.7      2,294.2      2,335.5
+PP&E                                        3,238.0      3,401.1      3,559.8      3,714.3      3,864.6
+Other assets                                6,254.2      6,136.8      6,019.5      5,902.3      5,785.0
+Total assets                               11,768.7     11,958.6     12,189.6     12,438.2     12,704.9
+Floor plan                                  2,063.9      2,101.0      2,138.9      2,177.4      2,216.5
+Term debt                                   3,422.0      3,272.0      3,122.0      2,972.0      2,822.0
+Revolver                                        0.0          0.0          0.0          0.0          0.0
+Other liabilities                           2,127.5      2,127.5      2,127.5      2,127.5      2,127.5
+Total liabilities                           7,613.4      7,500.5      7,388.4      7,276.9      7,166.0
+Equity                                      4,155.3      4,458.1      4,801.2      5,161.4      5,538.9
+Liabilities + equity                       11,768.7     11,958.6     12,189.6     12,438.2     12,704.9
+
+CASH FLOW STATEMENT (USD millions)
+                                            FY2026E      FY2027E      FY2028E      FY2029E      FY2030E
+Net income                                    413.6        452.8        493.1        510.1        527.5
+Add depreciation                               82.4         86.9         91.3         95.5         99.7
+Add impairment                                120.0        120.0        120.0        120.0        120.0
+Inventory investment                          -38.9        -39.1        -39.8        -40.6        -41.3
+Other working capital investment               -2.6         -2.6         -2.7         -2.7         -2.8
+Floor plan financing (operating)               36.9         37.1         37.8         38.5         39.2
+Operating cash flow                           611.4        655.1        699.7        720.9        742.3
+Investing cash flow / capex                  -250.0       -250.0       -250.0       -250.0       -250.0
+Term debt repayment                          -150.0       -150.0       -150.0       -150.0       -150.0
+FCFE before buyback / revolver                211.4        255.1        299.7        320.9        342.3
+Buyback                                      -150.0       -150.0       -150.0       -150.0       -150.0
+Revolver draw / (repayment)                     0.0          0.0          0.0          0.0          0.0
+Financing cash flow                          -300.0       -300.0       -300.0       -300.0       -300.0
+Change in cash                                 61.4        105.1        149.7        170.9        192.3
+Opening cash                                   40.4        101.8        206.9        356.6        527.5
+Closing cash                                  101.8        206.9        356.6        527.5        719.8
+
+CHECKS (USD millions)
+                                            FY2026E      FY2027E      FY2028E      FY2029E      FY2030E
+Assets - liabilities - equity                   0.0          0.0          0.0          0.0          0.0
+Cash above minimum (must be >= 0)              76.8        181.9        331.6        502.5        694.8
+Cash flow reconciliation                        0.0          0.0          0.0          0.0          0.0
+
+All annual checks: PASS
+
+PV of 2026-2030 FCFE: $1,059.87 million
+PV of terminal value: $4,177.46 million
+Equity value: $5,237.34 million
+Share of value after 2030: 79.76%
+Value per share: $291.75
