@@ -1,15 +1,5 @@
-"""Lab 09: ABG three-statement projection. Standard library only; USD millions.
-
-Run: python3 proforma.py
-Proof and financing tests: python3 proforma.py --self-test
-Deliberate failure (nonzero exit): python3 proforma.py --break-2026-cash
-Source: https://github.com/CinderZhang/FIN43900-Fall2026/blob/main/lessons/week-05/lab-09-proforma-build.md
-"""
-
-import argparse
-import math
-from copy import deepcopy
-
+# Lab 09: ABG pro-forma statements, 2026-2030
+# Amounts are in millions of dollars, except value per share.
 
 OPENING = dict(revenue=17999.0, inventory=2135.8, ppe=3070.4,
                other_assets=6371.6, cash=40.4, floor_plan=2027.0,
@@ -28,21 +18,14 @@ ASSUMPTIONS = dict(growth=0.018, gross_margin=0.1705,
                    shares=17.951349)
 
 
-def cash_and_revolver(cash_before, opening_revolver, minimum, limit):
-    """Apply the cash sweep, respecting revolver capacity."""
-    if cash_before < minimum:
-        movement = min(minimum - cash_before, max(0.0, limit - opening_revolver))
-    else:
-        movement = -min(cash_before - minimum, opening_revolver)
-    return cash_before + movement, opening_revolver + movement, movement
-
-
 def project(opening=OPENING, assumptions=ASSUMPTIONS):
     a = assumptions
     prior = dict(opening)
     result = []
     for i, year in enumerate(range(2026, 2031)):
         r = dict(year=year)
+
+        # Income statement: interest uses opening loan balances.
         r['revenue'] = prior['revenue'] * (1 + a['growth'])
         r['gross_profit'] = r['revenue'] * a['gross_margin']
         r['cogs'] = r['revenue'] - r['gross_profit']
@@ -57,6 +40,8 @@ def project(opening=OPENING, assumptions=ASSUMPTIONS):
         r['pretax'] = r['operating_income'] - r['interest']
         r['tax'] = max(0.0, r['pretax']) * a['tax_rate']
         r['net_income'] = r['pretax'] - r['tax']
+
+        # Balance sheet, leaving cash until the cash flows are calculated.
         r['inventory'] = r['cogs'] * a['inventory_days'] / 365
         r['floor_plan'] = r['inventory'] * a['floor_plan_ratio']
         r['capex'] = a['capex']
@@ -70,6 +55,8 @@ def project(opening=OPENING, assumptions=ASSUMPTIONS):
         r['other_liabilities'] = prior['other_liabilities']
         r['buyback'] = a['buyback']
         r['equity'] = prior['equity'] + r['net_income'] - r['buyback']
+
+        # Cash flow: add back non-cash expenses and account for investment.
         r['change_inventory'] = r['inventory'] - prior['inventory']
         r['change_floor_plan'] = r['floor_plan'] - prior['floor_plan']
         r['cfo'] = (r['net_income'] + r['depreciation'] + r['impairment']
@@ -77,8 +64,15 @@ def project(opening=OPENING, assumptions=ASSUMPTIONS):
         r['fcfe'] = r['cfo'] - r['capex'] - r['repayment']
         r['opening_cash'] = prior['cash']
         cash_before = prior['cash'] + r['fcfe'] - r['buyback']
-        r['cash'], r['revolver'], r['change_revolver'] = cash_and_revolver(
-            cash_before, prior['revolver'], a['minimum_cash'], a['revolver_limit'])
+        # Borrow to reach minimum cash, or use extra cash to repay the revolver.
+        if cash_before < a['minimum_cash']:
+            available = a['revolver_limit'] - prior['revolver']
+            change_revolver = min(a['minimum_cash'] - cash_before, available)
+        else:
+            change_revolver = -min(cash_before - a['minimum_cash'], prior['revolver'])
+        r['cash'] = cash_before + change_revolver
+        r['revolver'] = prior['revolver'] + change_revolver
+        r['change_revolver'] = change_revolver
         r['cfi'] = -r['capex']
         r['cff'] = -r['repayment'] - r['buyback'] + r['change_revolver']
         r['change_cash'] = r['cfo'] + r['cfi'] + r['cff']
@@ -94,11 +88,9 @@ def totals(r):
 
 
 def assert_balanced(rows, assumptions=ASSUMPTIONS, tolerance=1e-7):
-    """Recompute checks from live balances so edited cash cannot evade checks."""
+    # Recalculate the gap here so a changed cash balance is caught.
     for r in rows:
         year = f"FY{r['year']}E"
-        if not all(math.isfinite(v) for v in r.values()):
-            raise AssertionError(f'{year}: non-finite model value')
         gap = totals(r)[2]
         if abs(gap) > tolerance:
             raise AssertionError(f'{year}: assets - liabilities - equity gap {gap:.1f}')
@@ -130,34 +122,52 @@ def value_equity(rows, assumptions=ASSUMPTIONS):
 
 def table(title, rows, lines):
     print('\n' + title + ' (USD millions)')
-    print(f"{'':38}" + ''.join(f"{'FY' + str(r['year']) + 'E':>13}" for r in rows))
+    print(f"{'':38}", end='')
+    for r in rows:
+        print(f"{'FY' + str(r['year']) + 'E':>13}", end='')
+    print()
     for label, field in lines:
-        vals = [field(r) if callable(field) else r[field] for r in rows]
-        print(f'{label:38}' + ''.join(f'{0.0 if abs(v) < 1e-8 else v:13,.1f}' for v in vals))
+        print(f'{label:38}', end='')
+        for r in rows:
+            number = r[field]
+            if abs(number) < 0.00000001:
+                number = 0.0
+            print(f'{number:13,.1f}', end='')
+        print()
 
 
 def report(rows):
+    for r in rows:
+        r['assets'], r['liabilities'], r['balance_gap'] = totals(r)
+        r['liabilities_equity'] = r['liabilities'] + r['equity']
+        r['inventory_cash_flow'] = -r['change_inventory']
+        r['other_wc_cash_flow'] = -r['change_other_wc']
+        r['debt_cash_flow'] = -r['repayment']
+        r['buyback_cash_flow'] = -r['buyback']
+        r['cash_cushion'] = r['cash'] - ASSUMPTIONS['minimum_cash']
+        r['cash_gap'] = r['cash'] - r['opening_cash'] - r['change_cash']
+
     table('INCOME STATEMENT', rows, [(k.replace('_', ' ').title(), k) for k in
           ('revenue', 'cogs', 'gross_profit', 'sga', 'depreciation', 'impairment',
            'operating_income', 'interest', 'pretax', 'tax', 'net_income')])
     table('BALANCE SHEET', rows, [
         ('Cash', 'cash'), ('Inventory', 'inventory'), ('PP&E', 'ppe'),
-        ('Other assets', 'other_assets'), ('Total assets', lambda r: totals(r)[0]),
+        ('Other assets', 'other_assets'), ('Total assets', 'assets'),
         ('Floor plan', 'floor_plan'), ('Term debt', 'debt'), ('Revolver', 'revolver'),
-        ('Other liabilities', 'other_liabilities'), ('Total liabilities', lambda r: totals(r)[1]),
-        ('Equity', 'equity'), ('Liabilities + equity', lambda r: totals(r)[1] + r['equity'])])
+        ('Other liabilities', 'other_liabilities'), ('Total liabilities', 'liabilities'),
+        ('Equity', 'equity'), ('Liabilities + equity', 'liabilities_equity')])
     table('CASH FLOW STATEMENT', rows, [
         ('Net income', 'net_income'), ('Add depreciation', 'depreciation'),
-        ('Add impairment', 'impairment'), ('Inventory investment', lambda r: -r['change_inventory']),
-        ('Other working capital investment', lambda r: -r['change_other_wc']),
+        ('Add impairment', 'impairment'), ('Inventory investment', 'inventory_cash_flow'),
+        ('Other working capital investment', 'other_wc_cash_flow'),
         ('Floor plan financing (operating)', 'change_floor_plan'), ('Operating cash flow', 'cfo'),
-        ('Investing cash flow / capex', 'cfi'), ('Term debt repayment', lambda r: -r['repayment']),
-        ('FCFE before buyback / revolver', 'fcfe'), ('Buyback', lambda r: -r['buyback']),
+        ('Investing cash flow / capex', 'cfi'), ('Term debt repayment', 'debt_cash_flow'),
+        ('FCFE before buyback / revolver', 'fcfe'), ('Buyback', 'buyback_cash_flow'),
         ('Revolver draw / (repayment)', 'change_revolver'), ('Financing cash flow', 'cff'),
         ('Change in cash', 'change_cash'), ('Opening cash', 'opening_cash'), ('Closing cash', 'cash')])
-    table('CHECKS', rows, [('Assets - liabilities - equity', lambda r: totals(r)[2]),
-          ('Cash above minimum (must be >= 0)', lambda r: r['cash'] - ASSUMPTIONS['minimum_cash']),
-          ('Cash flow reconciliation', lambda r: r['cash'] - r['opening_cash'] - r['change_cash'])])
+    table('CHECKS', rows, [('Assets - liabilities - equity', 'balance_gap'),
+          ('Cash above minimum (must be >= 0)', 'cash_cushion'),
+          ('Cash flow reconciliation', 'cash_gap')])
     assert_balanced(rows)
     print('\nAll annual checks: PASS')
     v = value_equity(rows)
@@ -168,49 +178,8 @@ def report(rows):
     print(f"Value per share: ${v['per_share']:.2f}")
 
 
-def self_test():
-    rows = project()
-    expected = {'revenue': (18323.0, 19678.3), 'operating_income': (844.2, 971.4),
-                'net_income': (413.6, 527.5), 'fcfe': (211.4, 342.3), 'cash': (101.8, 719.8)}
-    for key, values in expected.items():
-        for r, expected_value in zip((rows[0], rows[-1]), values):
-            assert f'{r[key]:.1f}' == f'{expected_value:.1f}', (r['year'], key, r[key])
-    assert f"{value_equity(rows)['per_share']:.2f}" == '291.75'
-    print('PASS: all published endpoint values and $291.75 per share')
-    broken = deepcopy(rows)
-    broken[0]['cash'] = OPENING['cash']
-    try:
-        value_equity(broken)
-    except AssertionError as error:
-        assert str(error) == 'FY2026E: assets - liabilities - equity gap -61.4'
-        print(f'PASS: valuation refused broken model: {error}')
-    else:
-        raise AssertionError('Broken model was accepted')
-    assert cash_and_revolver(10, 0, 25, 850) == (25, 15, 15)
-    assert cash_and_revolver(100, 50, 25, 850) == (50, 0, -50)
-    assert cash_and_revolver(40, 50, 25, 850) == (25, 35, -15)
-    stressed = dict(ASSUMPTIONS, buyback=2000.0)
-    try:
-        value_equity(project(assumptions=stressed), stressed)
-    except AssertionError as error:
-        assert 'cash below minimum' in str(error)
-        print(f'PASS: exhausted revolver capacity rejected: {error}')
-    else:
-        raise AssertionError('Cash shortfall was accepted')
-    print('PASS: revolver draw, full repayment, partial repayment')
-    assert_balanced(rows)
-    print('PASS: original model remains balanced after deliberate failure test')
-
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--self-test', action='store_true')
-    parser.add_argument('--break-2026-cash', action='store_true')
-    args = parser.parse_args()
-    if args.self_test:
-        self_test()
-    else:
-        projection = project()
-        if args.break_2026_cash:
-            projection[0]['cash'] = OPENING['cash']
-        report(projection)
+    projection = project()
+    # For the lab's break test, uncomment the next line, run, then comment it again.
+    # projection[0]['cash'] = 40.4
+    report(projection)

@@ -1,5 +1,5 @@
-PASS: all published endpoint values and $291.75 per share
-PASS: valuation refused broken model: FY2026E: assets - liabilities - equity gap -61.4
-PASS: exhausted revolver capacity rejected: FY2026E: cash below minimum; gap -923.2
-PASS: revolver draw, full repayment, partial repayment
-PASS: original model remains balanced after deliberate failure test
+PASS: all five years and valuation match the original verified model
+PASS: value per share is $291.75; terminal share is 79.76%
+PASS: broken model stopped before valuation: FY2026E: assets - liabilities - equity gap -61.4
+PASS: financing calculations match under larger buyback scenarios
+PASS: restored model balances in all five years

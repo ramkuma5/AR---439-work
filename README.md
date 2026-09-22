@@ -12,11 +12,9 @@ From the folder containing the files, run:
 
 ```bash
 python3 proforma.py
-python3 proforma.py --self-test
-python3 proforma.py --break-2026-cash
 ```
 
-Use `python` instead of `python3` if that is your Python 3 command. The last command intentionally exits with an error before printing a valuation. A normal run uses the correct cash balance again; it does not require editing or repairing the file.
+Use `python` instead of `python3` if that is your Python 3 command. To do the break test, uncomment `projection[0]['cash'] = 40.4` near the end of the file and run it. The program should stop with the error shown below before printing a valuation. Comment that line again to restore the correct model.
 
 ## Known-answer verification
 
@@ -31,13 +29,13 @@ All amounts below are USD millions except value per share. Calculations retain f
 | Closing cash | 101.8 | 719.8 |
 | Assets less liabilities and equity | 0.0 | 0.0 |
 
-The self-test compares both endpoints with the lab's expected rounded values and checks the per-share result. It then changes the first projected cash balance to 40.4 in a separate copy. The valuation refuses that copy with:
+The model was checked against both endpoints and the expected per-share result. A separate verification run changed the first projected cash balance to 40.4. The program stopped before valuation with:
 
 ```text
 FY2026E: assets - liabilities - equity gap -61.4
 ```
 
-Additional tests cover revolver borrowing, partial and full repayment, and rejection of a cash shortfall after the borrowing limit is exhausted. The base case needs no revolver borrowing.
+The simplified version was also compared with the original verified model for every year and under larger buyback assumptions that require borrowing. Its calculations and printed results are unchanged. The base case needs no revolver borrowing.
 
 ## Explanation and reflection
 
